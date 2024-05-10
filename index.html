@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan de la maison interactif</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="map" style="height: 500px;"></div> <!-- Div pour Google Maps -->
+    <div id="info"><label for="surface-input">Surface:</label></div>
+     <!-- Div pour afficher les coordonnées -->
+
+    <!-- Script Google Maps avec votre clé d'API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYfENzzKetiOcxrv7ucMPvPMocVziUlp8&libraries=drawing,geometry"></script>
+    <!-- Votre script JavaScript -->
+ <script src="Map.js"></script>
+ 
+    <!-- Initialisation de la carte -->
+    <script>
+        // Assurez-vous d'appeler initMap() après que le script Google Maps soit chargé
+        if (typeof initMap === "function") {
+            initMap();
+        } else {
+            console.error("initMap n'est pas défini.");
+        }
+    </script>
+</body> 
+</body>
+</html>

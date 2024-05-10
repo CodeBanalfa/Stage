@@ -1,0 +1,33 @@
+ /* Style pour le plan de la maison */
+ #maison {
+    width: 300px;
+    height: 300px;
+    background-color: lightgray;
+    position: relative;
+    border: 1px solid black;
+}
+
+/* Style pour le toit */
+#toit {
+    width: 100px;
+    height: 100px;
+    background-color: darkred;
+    position: absolute;
+    top: 0;
+    left: 100px;
+}
+
+/* Style pour le marqueur */
+#marqueur {
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    position: absolute;
+    border-radius: 50%;
+}
+
+/* Pour centrer le marqueur */
+#info {
+    margin-top: 10px;
+    font-family: Arial, sans-serif;
+}
