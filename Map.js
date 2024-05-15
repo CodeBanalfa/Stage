@@ -1,10 +1,10 @@
 function initMap() {
-  const initialPosition = { lat: 48.8566, lng: 2.3522 };
+  const initialPosition = { lat: 49.2502, lng: 4.0319 }; // Coordonnées approximatives du nord de la France
 
   // Créer la carte Google Maps
   const map = new google.maps.Map(document.getElementById("map"), {
     center: initialPosition,
-    zoom: 12,
+    zoom: 7,
   });
 
   // Configurer le DrawingManager pour dessiner des polygones
@@ -22,7 +22,7 @@ function initMap() {
       draggable: true,
     },
   });
-
+   
   drawingManager.setMap(map);
 
   // Événement déclenché lorsqu'un polygone est complété
@@ -39,5 +39,9 @@ function initMap() {
       const info = document.getElementById("info");
       info.textContent = `Surface : ${area.toFixed(2)} m²`;
     }
-  );
+  );  function redirectToSurface() {
+    const input = document.getElementById("pac-input").value;
+    const encodedAddress = encodeURIComponent(input);
+    window.location.href = "surface.html?address=" + encodedAddress;
+}
 }

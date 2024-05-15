@@ -1,30 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plan de la maison interactif</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plan de la maison interactif</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="map" style="height: 500px;"></div> <!-- Div pour Google Maps -->
-    <div id="info"><label for="surface-input">Surface:</label></div>
-     <!-- Div pour afficher les coordonnées -->
+  <div id="map" style="height: 500px;"></div> <!-- Div pour Google Maps -->
+  <div id="info"><label for="surface-input">Surface:</label></div> <!-- Div pour afficher les coordonnées -->
+  <div id="pac-input"><label for="pac-input">adresse</label></div> <!-- Div pour afficher l'adresse -->
+  <button onclick="resetMap()">Réinitialiser</button> <!-- Bouton Réinitialiser -->
 
-    <!-- Script Google Maps avec votre clé d'API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYfENzzKetiOcxrv7ucMPvPMocVziUlp8&libraries=drawing,geometry"></script>
-    <!-- Votre script JavaScript -->
- <script src="Map.js"></script>
- 
-    <!-- Initialisation de la carte -->
-    <script>
-        // Assurez-vous d'appeler initMap() après que le script Google Maps soit chargé
-        if (typeof initMap === "function") {
-            initMap();
-        } else {
-            console.error("initMap n'est pas défini.");
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYfENzzKetiOcxrv7ucMPvPMocVziUlp8&libraries=drawing,geometry"></script>
+
+  <script>
+    let map;
+    let drawingManager;
+    let info;
+
+    function initMap() {
+      const initialPosition = { lat: 49.2502, lng: 4.0319 };
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: initialPosition,
+        zoom: 7,
+      });
+
+      drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: google.maps.drawing.OverlayType.POLYGON,
+        drawingControl: true,
+        drawingControlOptions: {
+          position: google.maps.ControlPosition.TOP_CENTER,
+          drawingModes: ["polygon"],
+        },
+        polygonOptions: {
+          fillColor: "blue",
+          strokeColor: "blue",
+          editable: true,
+          draggable: true,
+        },
+      });
+
+      drawingManager.setMap(map);
+
+      info = document.getElementById("info");
+
+      google.maps.event.addListener(
+        drawingManager,
+        "polygoncomplete",
+        (polygon) => {
+          const area = google.maps.geometry.spherical.computeArea(polygon.getPath());
+          info.textContent = `Surface : ${area.toFixed(2)} m²`;
+
+          // Sauvegarde de la surface dans localStorage
+          localStorage.setItem('polygonArea', JSON.stringify(area.toFixed(2)));
         }
-    </script>
-</body> 
+      );
+    }
+
+    function resetMap() {
+      // Supprimer le polygone dessiné
+      if (drawingManager) {
+        drawingManager.setMap(null);
+      }
+
+      // Réinitialiser le contenu de l'élément d'affichage des coordonnées
+      if (info) {
+        info.textContent = '';
+      }
+
+      // Réinitialiser le formulaire dans localStorage
+      localStorage.removeItem('polygonArea');
+
+      // Réinitialiser la carte
+      initMap();
+    }
+
+    // Chargement de la carte Google Maps
+    if (typeof initMap === "function") {
+      initMap();
+    } else {
+      console.error("initMap n'est pas défini.");
+    }
+
+    function initAutocomplete() {
+      const map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 49.2502, lng: 4.0319 },
+        zoom: 7,
+        mapTypeId: "roadmap",
+      });
+
+      const input = document.getElementById("pac-input");
+      const searchBox = new google.maps.places.SearchBox(input);
+
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+      
+      map.addListener("bounds_changed", () => {
+        searchBox.setBounds(map.getBounds());
+      });
+
+      let markers = [];
+
+      searchBox.addListener("places_changed", () => {
+        const places = searchBox.getPlaces();
+
+        if (places.length == 0) {
+          return;
+        }
+
+        markers.forEach((marker) => {
+          marker.setMap(null);
+        });
+        markers = [];
+
+        const bounds = new google.maps.LatLngBounds();
+
+        places.forEach((place) => {
+          if (!place.geometry || !place.geometry.location) {
+            console.log("Returned place contains no geometry");
+            return;
+          }
+
+          const icon = {
+            url: place.icon,
+            size: new google.maps.Size(71, 71),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(17, 34),
+            scaledSize: new google.maps.Size(25, 25),
+          };
+
+          markers.push(
+            new google.maps.Marker({
+              map,
+              icon,
+              title: place.name,
+              position: place.geometry.location,
+            })
+          );
+
+          bounds.extend(place.geometry.location);
+        });
+
+        map.fitBounds(bounds);
+        map.setZoom(15); // Définir le niveau de zoom à 15 (vous pouvez ajuster selon vos préférences)
+
+        // Mettre à jour le contenu de la div adresse avec l'adresse sélectionnée
+        document.getElementById("adresse").textContent = places[0].formatted_address;
+      });
+    }
+
+    const searchQuery = input.value;
+    window.initAutocomplete = initAutocomplete;
+  </script>
 </body>
 </html>
