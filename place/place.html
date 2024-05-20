@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map with Search and Drawing</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+        }
+        #root {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #map {
+            flex-grow: 1;
+        }
+        #controls {
+            display: flex;
+            padding: 10px;
+            background: #f6f5ff;
+        }
+        #pac-input {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #undo-button {
+            padding: 10px;
+            margin-left: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div id="controls">
+            <input id="pac-input" type="text" placeholder="Search Box" />
+            <button id="undo-button">Undo Last Shape</button>
+        </div>
+        <div id="map"></div>
+    </div>
+    <script>
+        let map;
+        let drawingManager;
+        let markers = [];
+        let shapes = [];
+
+        function initMap() {
+            const initialPosition = { lat: 38, lng: -98 };
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: initialPosition,
+                zoom: 4,
+                mapTypeId: "roadmap",
+            });
+
+            drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: ["polygon"],
+                },
+                polygonOptions: {
+                    fillColor: "blue",
+                    strokeColor: "blue",
+                    editable: true,
+                    draggable: true,
+                },
+            });
+
+            drawingManager.setMap(map);
+
+            google.maps.event.addListener(drawingManager, "polygoncomplete", (polygon) => {
+                shapes.push(polygon);
+            });
+
+            const input = document.getElementById("pac-input");
+            const searchBox = new google.maps.places.SearchBox(input);
+
+            map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+            map.addListener("bounds_changed", () => {
+                searchBox.setBounds(map.getBounds());
+            });
+
+            searchBox.addListener("places_changed", () => {
+                const places = searchBox.getPlaces();
+                if (places.length == 0) return;
+
+                markers.forEach((marker) => marker.setMap(null));
+                markers = [];
+
+                const bounds = new google.maps.LatLngBounds();
+                places.forEach((place) => {
+                    if (!place.geometry || !place.geometry.location) {
+                        console.log("Returned place contains no geometry");
+                        return;
+                    }
+
+                    const marker = new google.maps.Marker({
+                        map,
+                        title: place.name,
+                        position: place.geometry.location,
+                    });
+                    markers.push(marker);
+
+                    if (place.geometry.viewport) {
+                        bounds.union(place.geometry.viewport);
+                    } else {
+                        bounds.extend(place.geometry.location);
+                    }
+                });
+                map.fitBounds(bounds);
+            });
+
+            document.getElementById("undo-button").addEventListener("click", () => {
+                if (shapes.length > 0) {
+                    const lastShape = shapes.pop();
+                    lastShape.setMap(null);
+                }
+            });
+        }
+
+        function loadScript(src) {
+            const script = document.createElement('script');
+            script.src = src;
+            document.head.appendChild(script);
+        }
+
+        loadScript(`https://maps.googleapis.com/maps/api/js?key=AIzaSyCYfENzzKetiOcxrv7ucMPvPMocVziUlp8&libraries=drawing,places&callback=initMap`);
+    </script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Map with Search and Drawing</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+      }
+      
+      #map {
+        height: 300px;
+        width: 100%;
+      }
+      
+      .controls-container {
+        margin-top: 10px;
+        text-align: center;
+        top: 90%;
+      }
+      
+      .controls {
+        width: 300px;
+        padding: 10px;
+        margin: 10px auto;
+        display: block;
+        border: 3px solid blue;
+        background: white;
+        margin-top: 90%;
+      }
+      
+      #surface-area {
+        box-sizing: content-box;
+        padding: 5px;
+        width: 40em;
+        border: 3px solid blue;
+        background: rgb(223, 218, 218);
+      }
+      
+      #info {
+        margin: 10px auto;
+      }
+      
+      #clearDrawing {
+        padding: 10px 20px;
+        margin: 10px auto;
+        display: block;
+      }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="controls-container">
+    <input
+      id="pac-input"
+      class="controls"
+      type="text"
+      placeholder="Search Box"
+    />
+    <div id="info">
+      
+      <label for="surface-input">Surface:</label>
+      <span id="surface-area">0 m²</span>
+    </div>
+    <button id="clearDrawing">Clear Drawing</button>
+  </div>
+
+  <script>
+    let map;
+    let drawingManager;
+    let infoWindow;
+    let markers = [];
+    let polygon;
+
+    function initMap() {
+      const initialPosition = { lat: 49.2502, lng: 4.0319 };
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: initialPosition,
+        zoom: 7,
+        mapTypeId: "satellite",
+      });
+
+      drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: google.maps.drawing.OverlayType.POLYGON,
+        drawingControl: true,
+        drawingControlOptions: {
+          position: google.maps.ControlPosition.TOP_CENTER,
+          drawingModes: ["polygon"],
+        },
+        polygonOptions: {
+          fillColor: "blue",
+          strokeColor: "blue",
+          editable: true,
+          draggable: true,
+        },
+      });
+
+      drawingManager.setMap(map);
+
+      const surfaceAreaElement = document.getElementById("surface-area");
+
+      google.maps.event.addListener(drawingManager, "polygoncomplete", (poly) => {
+        if (poly.getPath().getLength() > 5) {
+          alert("You can only create polygons with up to 5 points.");
+          poly.setMap(null);
+          return;
+        }
+        
+        polygon = poly;
+        const area = google.maps.geometry.spherical.computeArea(polygon.getPath());
+        surfaceAreaElement.textContent = `${area.toFixed(2)} m²`;
+        localStorage.setItem('polygonArea', JSON.stringify(area.toFixed(2)));
+      });
+
+      var input = document.getElementById("pac-input");
+      var searchBox = new google.maps.places.SearchBox(input);
+
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+      map.addListener("bounds_changed", () => {
+        searchBox.setBounds(map.getBounds());
+      });
+
+      searchBox.addListener("places_changed", () => {
+        const places = searchBox.getPlaces();
+
+        if (places.length == 0) {
+          return;
+        }
+
+        markers.forEach((marker) => marker.setMap(null));
+        markers = [];
+
+        const bounds = new google.maps.LatLngBounds();
+
+        places.forEach((place) => {
+          if (!place.geometry || !place.geometry.location) {
+            console.log("Returned place contains no geometry");
+            return;
+          }
+
+          markers.push(
+            new google.maps.Marker({
+              map,
+              title: place.name,
+              position: place.geometry.location,
+            })
+          );
+
+          if (place.geometry.viewport) {
+            bounds.union(place.geometry.viewport);
+          } else {
+            bounds.extend(place.geometry.location);
+          }
+        });
+
+        map.fitBounds(bounds);
+      });
+
+      document.getElementById("clearDrawing").addEventListener("click", function() {
+        drawingManager.setDrawingMode(null);
+        if (polygon) {
+          polygon.setMap(null);
+        }
+        surfaceAreaElement.textContent = "0 m²";
+      });
+    }
+
+    if (typeof initMap === "function") {
+      initMap();
+    } else {
+      console.error("initMap is not defined.");
+    }
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYfENzzKetiOcxrv7ucMPvPMocVziUlp8&libraries=drawing,geometry,places&callback=initMap"></script>
+</body>
+</html>

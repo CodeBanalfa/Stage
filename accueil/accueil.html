@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,8 +16,7 @@
     placeholder="Search Box"
   />
   <div id="map"></div>
-  <!-- Bouton de réinitialisation -->
-  <button onclick="resetMap()">Réinitialiser</button>
+ 
   
   <script>
     let map;
@@ -30,8 +30,8 @@
         mapTypeId: "roadmap",
       });
 
-      const input = document.getElementById("pac-input");
-      const searchBox = new google.maps.places.SearchBox(input);
+      var input = document.getElementById("pac-input");
+      var searchBox = new google.maps.places.SearchBox(input);
 
       map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
       
@@ -89,11 +89,7 @@
       });
     }
 
-    function resetMap() {
-      // Réinitialiser la carte à son état initial
-      initAutocomplete();
-    }
-
+    
     // Charger la carte Google Maps
     if (typeof initAutocomplete === "function") {
       initAutocomplete();

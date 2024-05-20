@@ -7,17 +7,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <input
+    id="pac-input"
+    class="controls"
+    type="text"
+    placeholder="Enter a location"
+  />
   <div id="map" style="height: 500px;"></div> <!-- Div pour Google Maps -->
   <div id="info"><label for="surface-input">Surface:</label></div> <!-- Div pour afficher les coordonnées -->
-  <div id="pac-input"><label for="pac-input">adresse</label></div> <!-- Div pour afficher l'adresse -->
-  <button onclick="resetMap()">Réinitialiser</button> <!-- Bouton Réinitialiser -->
-
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYfENzzKetiOcxrv7ucMPvPMocVziUlp8&libraries=drawing,geometry"></script>
 
   <script>
     let map;
     let drawingManager;
     let info;
+    let markers = [];
 
     function initMap() {
       const initialPosition = { lat: 49.2502, lng: 4.0319 };
@@ -58,25 +61,7 @@
       );
     }
 
-    function resetMap() {
-      // Supprimer le polygone dessiné
-      if (drawingManager) {
-        drawingManager.setMap(null);
-      }
-
-      // Réinitialiser le contenu de l'élément d'affichage des coordonnées
-      if (info) {
-        info.textContent = '';
-      }
-
-      // Réinitialiser le formulaire dans localStorage
-      localStorage.removeItem('polygonArea');
-
-      // Réinitialiser la carte
-      initMap();
-    }
-
-    // Chargement de la carte Google Maps
+    // Charger la carte Google Maps
     if (typeof initMap === "function") {
       initMap();
     } else {
@@ -138,19 +123,26 @@
             })
           );
 
-          bounds.extend(place.geometry.location);
+          if (place.geometry.viewport) {
+            bounds.union(place.geometry.viewport);
+          } else {
+            bounds.extend(place.geometry.location);
+          }
         });
 
         map.fitBounds(bounds);
-        map.setZoom(15); // Définir le niveau de zoom à 15 (vous pouvez ajuster selon vos préférences)
-
-        // Mettre à jour le contenu de la div adresse avec l'adresse sélectionnée
-        document.getElementById("adresse").textContent = places[0].formatted_address;
       });
     }
 
-    const searchQuery = input.value;
-    window.initAutocomplete = initAutocomplete;
+    // Charger l'API Google Maps avec le callback pour initAutocomplete
+    if (typeof initAutocomplete === "function") {
+      initAutocomplete();
+    } else {
+      console.error("initAutocomplete n'est pas défini.");
+    }
   </script>
+
+  <!-- Charger l'API Google Maps avec le callback pour initMap -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYfENzzKetiOcxrv7ucMPvPMocVziUlp8&libraries=drawing,geometry,places&callback=initMap"></script>
 </body>
 </html>
